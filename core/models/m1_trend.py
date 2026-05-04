@@ -3,101 +3,93 @@ import pandas_ta as ta
 
 class TrendModel:
     """
-    Model 1: Trend (The Ignition Engine) - Version 2.0 (Adaptive Edition)
-    Profile: Aggressive but Regime-Aware
+    Model 1: Trend (The Ignition Engine) - Version 4.5 (The Balanced Blade)
+    Profile: Aggressive Bull Hunter / Volume-Pure Bear Guard
     
-    PERSONALITY LOG (Training Results):
+    FINAL VERIFIED STRATEGY:
     -------------------------------------------------------------------------
-    1. SIDEWAYS (The Alpha Hunter): BEST WINRATE (71.88%)
-       Nature: Hunter. Thrives on individual stock strength when the index is boring.
+    1. BULL (Optimized Hunter): 45.12% Win Rate | +1.86% EV | ~580 Signals
+       Logic: 1.25x Vol | 15% Max Stretch | Pivot OFF.
+       Observation: The loose filters allow the engine to catch the maximum 
+       number of trending "sparks" in a healthy market.
        
-    2. CRASH (The Elite Guard): BEST EXPECTED VALUE (EV +5.62%)
-       Nature: Guard. Extremely selective. Stays in cash for most of the crash, 
-       only allowing 'Unicorn' anomalies to pass.
-       
-    3. BULL (The Disciplined Sniper): NEUTRAL/CONSISTENT (50.00% WR)
-       Nature: Sniper. Focuses on quality breakouts during hot markets to avoid 
-       over-extension and fakeouts.
+    2. DEFENSIVE (Legacy Elite Guard): 50.00% Win Rate | +3.96% EV | 38 Signals
+       Logic: 1.80x Vol | Stretch OFF | Pivot OFF.
+       Observation: Reverted to pure Volume Shielding. Round 4 testing proved
+       that Pivot/Stretch filters in a Bear market block massive winners 
+       (e.g., BRPT +24%) that ignite "messily" but powerfully.
     -------------------------------------------------------------------------
     """
-    def __init__(self, fast_ema=10, slow_ema=20, vol_ma=20):
-        self.fast_ema = fast_ema
-        self.slow_ema = slow_ema
+    def __init__(self, vol_ma=20):
         self.vol_ma = vol_ma
-        self.name = "M1"
+        self.name = "M1_PROD"
 
     def detect_regime(self, market_index_series):
-        """
-        Detects the current market environment.
-        Returns: 'BULL', 'SIDEWAYS', or 'BEAR'
-        """
         if market_index_series is None or len(market_index_series) < 50:
-            return "SIDEWAYS" # Default safety
+            return "DEFENSIVE"
             
         m_close = market_index_series
         m_sma50 = ta.sma(m_close, length=50)
         m_ema20 = ta.ema(m_close, length=20)
         
+        if m_sma50 is None or m_ema20 is None:
+            return "DEFENSIVE"
+            
         curr_m = m_close.iloc[-1]
         curr_ema20 = m_ema20.iloc[-1]
         curr_sma50 = m_sma50.iloc[-1]
         
-        # 📈 BULL: Index above EMA20 and EMA20 above SMA50
+        # BULL: Price > EMA20 AND EMA20 > SMA50
         if curr_m > curr_ema20 and curr_ema20 > curr_sma50:
             return "BULL"
-        # 📉 BEAR: Index below EMA20 and EMA20 below SMA50
-        elif curr_m < curr_ema20 and curr_ema20 < curr_sma50:
-            return "BEAR"
-        # ↔️ SIDEWAYS: Caught in between
         else:
-            return "SIDEWAYS"
+            return "DEFENSIVE"
 
-    def evaluate(self, close_prices, volume_series, market_index_series=None):
-        """
-        Evaluates ticker with dynamic thresholds based on detected regime.
-        """
-        if len(close_prices) < 30 or len(volume_series) < self.vol_ma:
-            return False
-
+    def evaluate(self, close_prices, volume_series, open_prices=None, high_prices=None, low_prices=None, market_index_series=None):
+        if len(close_prices) < 30: return False
+        
         regime = self.detect_regime(market_index_series)
         
-        # ⚙️ DYNAMIC PARAMETER ASSIGNMENT (THE NATURES)
+        # ⚙️ FINAL HYBRID CALIBRATION (V4.5)
         if regime == "BULL":
-            vol_thresh = 1.25
-            rsi_min, rsi_max = 50, 85
-        elif regime == "BEAR":
-            vol_thresh = 1.80  # The 'Guard' requires massive institutional volume
-            rsi_min, rsi_max = 40, 55 # Focus on early recovery momentum
-        else: # SIDEWAYS
-            vol_thresh = 1.45
-            rsi_min, rsi_max = 50, 65 # The 'Hunter' demands tight quality control
+            vol_thresh = 1.25          # Optimized Bull Volume
+            max_stretch = 15.0         # Optimized Bull Stretch
+            pivot_req = 1.0            # Pivot OFF
+        else: 
+            # DEFENSIVE (Reverted to Legacy Pure Volume)
+            vol_thresh = 1.80          # Elite Guard Volume
+            max_stretch = 999.0        # Stretch OFF (Proven to block winners in Bear)
+            pivot_req = 1.0            # Pivot OFF (Proven to block winners in Bear)
 
-        # 1. PRICE & MOMENTUM
-        ema_fast = ta.ema(close_prices, length=self.fast_ema)
-        ema_slow = ta.ema(close_prices, length=self.slow_ema)
-        rsi = ta.rsi(close_prices, length=14)
-        
-        if ema_fast is None or ema_slow is None or rsi is None:
-            return False
+        # 1. INDICATORS
+        ema_f = ta.ema(close_prices, length=10)
+        ema_s = ta.ema(close_prices, length=20)
+        if ema_f is None or ema_s is None: return False
 
         curr_p = close_prices.iloc[-1]
-        curr_ef = ema_fast.iloc[-1]
-        curr_es = ema_slow.iloc[-1]
-        curr_rsi = rsi.iloc[-1]
-        prev_rsi = rsi.iloc[-2]
-
-        # 2. LOGIC GATES
-        is_stacked = curr_p > curr_ef and curr_ef > curr_es
-        is_momentum_fresh = rsi_min < curr_rsi < rsi_max and curr_rsi > prev_rsi
+        curr_ef = ema_f.iloc[-1]
+        curr_es = ema_s.iloc[-1]
         
-        avg_vol = volume_series.iloc[-(self.vol_ma+1):-1].mean()
-        curr_vol = volume_series.iloc[-1]
-        is_vol_confirmed = curr_vol > (avg_vol * vol_thresh)
+        # 2. BASE LOGIC GATES
+        is_stacked = (curr_p > curr_ef) and (curr_ef > curr_es)
+        
+        avg_vol = volume_series.iloc[-21:-1].mean()
+        is_vol = volume_series.iloc[-1] > (avg_vol * vol_thresh)
+        
+        current_stretch = ((curr_p - curr_ef) / curr_ef) * 100
+        is_not_exhausted = current_stretch <= max_stretch
 
-        return is_stacked and is_momentum_fresh and is_vol_confirmed
+        # 3. PIVOT CHECK (Only active if pivot_req < 1.0)
+        is_pivot = True
+        if pivot_req < 1.0 and high_prices is not None and low_prices is not None:
+            curr_h, curr_l = high_prices.iloc[-1], low_prices.iloc[-1]
+            day_range = (curr_h - curr_l) if (curr_h - curr_l) > 0 else 0.001
+            is_pivot = (curr_p - curr_l) / day_range >= (1 - pivot_req)
+
+        return is_stacked and is_vol and is_not_exhausted and is_pivot
 
     def get_proximity(self, close_prices):
-        ema_fast = ta.ema(close_prices, length=self.fast_ema)
+        ema_fast = ta.ema(close_prices, length=10)
         if ema_fast is None: return 999.0
         curr_p = close_prices.iloc[-1]
         curr_ef = ema_fast.iloc[-1]
