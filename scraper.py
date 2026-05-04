@@ -60,19 +60,18 @@ class IntradayScraper:
             symbol = f"{ticker}.JK"
             cache_file = self.get_cache_filename(ticker)
             
-            # 1. Check Local Cache First (Avoid redundant downloads on the same day)
+            # 1. Check Local Cache First
             if os.path.exists(cache_file):
                 print(f" [{idx+1}/{len(tickers)}] {ticker:<6} | {GREEN}Loaded from Local Cache{RESET}")
                 success_count += 1
                 continue
                 
-            # 2. Fetch from Yahoo Finance if not cached
+            # 2. Fetch from Yahoo Finance
             try:
-                print(f" [{idx+1}/{len(tickers)}] {ticker:<6} | 📡 Downloading from yfinance...", end="")
-                # Download 60 days of 5-minute bars (yfinance maximum limit)
+                print(f" [{idx+1}/{len(tickers)}] {ticker:<6} | 📡 Downloading...", end="")
                 data = yf.download(symbol, period="60d", interval="5m", progress=False)
                 
-                # Check for single-level vs multi-level column drop handling
+                # Handling yfinance multi-level columns
                 if isinstance(data.columns, pd.MultiIndex):
                     data = data.xs(symbol, level=1, axis=1)
 
@@ -80,15 +79,22 @@ class IntradayScraper:
                     print(f"\r [{idx+1}/{len(tickers)}] {ticker:<6} | {YELLOW}⚠️ No Data Found{RESET}       ")
                     failed_tickers.append(ticker)
                 else:
-                    # Clean timezone and save to CSV
+                    # --- STANDARDIZATION FIX ---
+                    # Ensure the index is named properly
+                    data.index.name = "Datetime"
+                    
+                    # Clean timezone
                     if data.index.tz is not None:
                         data.index = data.index.tz_localize(None)
                     
-                    data.to_csv(cache_file)
-                    print(f"\r [{idx+1}/{len(tickers)}] {ticker:<6} | {GREEN}✅ Saved to Cache ({len(data)} bars){RESET}")
+                    # Reset index to move Datetime into a column and save without index
+                    # This guarantees the "Datetime" header exists in the CSV
+                    data.reset_index(inplace=True)
+                    data.to_csv(cache_file, index=False)
+                    
+                    print(f"\r [{idx+1}/{len(tickers)}] {ticker:<6} | {GREEN}✅ Saved Standardized ({len(data)} bars){RESET}")
                     success_count += 1
                     
-                # Rate Limit Protection: Sleep for 0.5 seconds between requests
                 time.sleep(0.5)
                 
             except Exception as e:

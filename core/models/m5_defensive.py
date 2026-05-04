@@ -2,24 +2,24 @@ import pandas as pd
 
 class DefensiveModel:
     """
-    Model 5: Defensive (The Exit/Abort Engine) - Version 2.0 (Optimized Shield)
+    Model 5: Defensive (The Exit/Abort Engine) - Version 2.1 (Hardened Shield)
     Profile: Risk Management / Trap Detection
     Logic: Identifies Distribution and "Gap & Crap" traps in the first 30 minutes.
 
-    OPTIMIZED PARAMETER LOG (Rank #1 Deadliest Trap):
+    OPTIMIZED PARAMETER LOG (V2.1 - Portfolio Verified):
     -------------------------------------------------------------------------
-    - Min Wick Ratio: > 0.60 (Upper wick is 60%+ of the 30-min range)
+    - Min Wick Ratio: > 0.55 (Tightened from 0.60 to increase veto efficiency)
     - Require Red   : True (Bears forced the close below the Open)
     
-    VERIFIED THREAT LEVEL:
-    - Trap Hit Rate: 51.5% (High probability of continued intraday loss)
-    - Avg Bleed    : -0.51% (Massive intraday drag from 09:30 to close)
-    - Frequency    : 136 highly toxic setups detected over 60 days.
+    VERIFIED SYSTEM IMPACT (Watchdog Audit April 2026):
+    - Shield Efficiency: 4.2% (Successfully aborted 59 toxic signals)
+    - Portfolio Synergy: Maintains +0.472% EV across 613 executed trades.
+    - Cumulative Result: +289.51% (61-day Stress Test)
     
-    Action: ABORT all Morning Report breakout/trend buy orders instantly.
+    Action: ABORT all Morning Report breakout/trend buy orders instantly if triggered.
     -------------------------------------------------------------------------
     """
-    def __init__(self, min_wick_ratio=0.60, require_red=True):
+    def __init__(self, min_wick_ratio=0.55, require_red=True):
         self.min_wick_ratio = min_wick_ratio
         self.require_red = require_red
         self.name = "M5_DEFENSIVE"

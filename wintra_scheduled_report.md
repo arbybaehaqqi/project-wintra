@@ -1,61 +1,43 @@
-```text
 
-═══════════════════════════════════════════════════════════════════════════
-🌅 WINTRA INTEGRATED MORNING REPORT | 2026-04-29 | 21:15 WIB
-═══════════════════════════════════════════════════════════════════════════
+═════════════════════════════════════════════════════════════════════════════════════
+🌅 WINTRA PORTFOLIO STRATEGY REPORT (M9 CONTROLLED) | 2026-04-27
+═════════════════════════════════════════════════════════════════════════════════════
+🌍 1. MARKET REGIME DETECTION: BEAR
 
-🌍 1. MACRO & MARKET CONTEXT
-───────────────────────────────────────────────────────────────────────────
-Market Regime   : SIDEWAYS
-IHSG            : 7,101.23 (+0.41%)
-USD/IDR         : Rp 17,319 (+0.60%)
-Crude Oil       : $104.80/bbl (+4.87%)
+📡 2. SCANNING UNIVERSE & PARAMETER AUDIT
+─────────────────────────────────────────────────────────────────────────────────────
 
-🔍 2. INDIVIDUAL ENGINE SIGNALS & NEAR MISSES
-───────────────────────────────────────────────────────────────────────────
-[M4_Alpha    | 35% Weight] ⚠️ No tickers met all criteria today.
-   --- Near Misses (Failed Quality Filters / Not Recommended) ---
-   1. ADMR   | Alpha Outperf: 0.00%
-   2. ADRO   | Alpha Outperf: 0.00%
-   3. AKRA   | Alpha Outperf: 0.00%
+[DEBUG: AMMN]
+  M1 (Trend)  | EMA10: 5370 | EMA20: 5424 | Vol Ratio: 0.97x
+  M4 (Alpha)  | Alpha vs IHSG (20d): +10.45%
+  M6 (Beta)   | ITR: 9.4% | Resilience: 0.79
 
-[M1_Trend    | 35% Weight] ✅ Triggered on 2 ticker(s):
-   1. SIDO   | Proximity: 2.52%
-   2. DSNG   | Proximity: 5.34%
-   --- Near Misses (Failed Quality Filters / Not Recommended) ---
-   1. HRUM   | Proximity: 0.34%
-   2. INDY   | Proximity: 0.42%
-   3. MDKA   | Proximity: 0.60%
+[DEBUG: ASII]
+  M1 (Trend)  | EMA10: 6288 | EMA20: 6266 | Vol Ratio: 0.61x
+  M4 (Alpha)  | Alpha vs IHSG (20d): -3.75%
+  M6 (Beta)   | ITR: 3.9% | Resilience: 0.00
 
-[M3_Breakout | 20% Weight] ⚠️ No tickers met all criteria today.
-   --- Near Misses (Failed Quality Filters / Not Recommended) ---
-   1. ARTO   | Vol Surge: 10.00x
-   2. PPRE   | Vol Surge: 4.92x
-   3. DSNG   | Vol Surge: 2.90x
+[DEBUG: BBRI]
+  M1 (Trend)  | EMA10: 3157 | EMA20: 3193 | Vol Ratio: 0.74x
+  M4 (Alpha)  | Alpha vs IHSG (20d): -3.56%
+  M6 (Beta)   | ITR: 1.6% | Resilience: 0.00
 
-[M2_Revert   | 10% Weight] ⚠️ No tickers met all criteria today.
-   --- Near Misses (Failed Quality Filters / Not Recommended) ---
-   1. DSSA   | Stretch: 32.49%
-   2. BREN   | Stretch: 14.28%
-   3. UNVR   | Stretch: 10.56%
+[DEBUG: GOTO]
+  M1 (Trend)  | EMA10: 53 | EMA20: 53 | Vol Ratio: 0.92x
+  M4 (Alpha)  | Alpha vs IHSG (20d): +1.71%
+  M6 (Beta)   | ITR: 3.8% | Resilience: 0.50
 
-🏆 3. THE WINTRA TOURNAMENT: TOP 5 CONVICTION TRADES
-───────────────────────────────────────────────────────────────────────────
- 1. SIDO   | M1 Trend      | Score:  26.2 | Proximity: 2.52%
- 2. DSNG   | M1 Trend      | Score:  16.3 | Proximity: 5.34%
+[DEBUG: TLKM]
+  M1 (Trend)  | EMA10: 2973 | EMA20: 3047 | Vol Ratio: 0.83x
+  M4 (Alpha)  | Alpha vs IHSG (20d): -7.12%
+  M6 (Beta)   | ITR: 1.4% | Resilience: 0.50
 
-🌐 4. THE EXPANDED LEAGUE: TOP 10 OVERALL (Including Near Misses)
-───────────────────────────────────────────────────────────────────────────
-  1. HRUM   | M1 Trend      | Score:  33.8 | Proximity: 0.34% | ⚠️ Near Miss
-  2. INDY   | M1 Trend      | Score:  33.5 | Proximity: 0.42% | ⚠️ Near Miss
-  3. MDKA   | M1 Trend      | Score:  32.9 | Proximity: 0.60% | ⚠️ Near Miss
-  4. KPIG   | M1 Trend      | Score:  32.9 | Proximity: 0.61% | ⚠️ Near Miss
-  5. PGAS   | M1 Trend      | Score:  32.4 | Proximity: 0.73% | ⚠️ Near Miss
-  6. BBNI   | M1 Trend      | Score:  32.0 | Proximity: 0.87% | ⚠️ Near Miss
-  7. SMRA   | M1 Trend      | Score:  30.9 | Proximity: 1.16% | ⚠️ Near Miss
-  8. INCO   | M1 Trend      | Score:  29.6 | Proximity: 1.55% | ⚠️ Near Miss
-  9. CMRY   | M1 Trend      | Score:  28.8 | Proximity: 1.78% | ⚠️ Near Miss
- 10. BBTN   | M1 Trend      | Score:  27.5 | Proximity: 2.15% | ⚠️ Near Miss
-═══════════════════════════════════════════════════════════════════════════
+🏆 3. THE WINTRA TOURNAMENT: M9 SELECTION
+─────────────────────────────────────────────────────────────────────────────────────
+⚠️ No high-conviction signals cleared the M9 filters today.
 
-```
+🌐 4. REGIME WEIGHTS (MODEL 9 CONTROL):
+─────────────────────────────────────────────────────────────────────────────────────
+M5_Defensive: 100% | M2_Revert: 90% | M7_Washout: 80% | M1_Trend: 40% | M6_HighBeta: 20% | M4_Alpha: 10%
+
+═════════════════════════════════════════════════════════════════════════════════════

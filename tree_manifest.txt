@@ -1,0 +1,69 @@
+C:\Users\ARBY\Documents\Microservice\project-wintra
+├── .env
+├── .github
+│   └── workflows
+│       ├── main.yml
+│       └── wintra_main.yml
+├── __pycache__
+│   └── wintra_engine.cpython-314.pyc
+├── core
+│   ├── __pycache__
+│   │   ├── models.cpython-312.pyc
+│   │   ├── models.cpython-313.pyc
+│   │   └── models.cpython-314.pyc
+│   ├── data
+│   │   ├── idx80_list.json
+│   │   ├── m2_training_cache.json
+│   │   └── morning_history.json
+│   ├── models
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   ├── __init__.cpython-313.pyc
+│   │   │   ├── intraday_playbooks.cpython-313.pyc
+│   │   │   ├── m1_trend.cpython-312.pyc
+│   │   │   ├── m1_trend.cpython-313.pyc
+│   │   │   ├── m1_trend_opt.cpython-312.pyc
+│   │   │   ├── m1_trend_opt.cpython-313.pyc
+│   │   │   ├── m2_revert.cpython-312.pyc
+│   │   │   ├── m2_revert.cpython-313.pyc
+│   │   │   ├── m2_revert_opt.cpython-312.pyc
+│   │   │   ├── m2_revert_opt.cpython-313.pyc
+│   │   │   ├── m3_breakout.cpython-312.pyc
+│   │   │   ├── m3_breakout.cpython-313.pyc
+│   │   │   ├── m4_leadership.cpython-312.pyc
+│   │   │   ├── m4_leadership.cpython-313.pyc
+│   │   │   ├── m5_defensive.cpython-313.pyc
+│   │   │   ├── m6_high_beta.cpython-313.pyc
+│   │   │   ├── m7_washout.cpython-313.pyc
+│   │   │   └── m8_camarilla.cpython-313.pyc
+│   │   ├── intraday_playbooks.py
+│   │   ├── m1_trend.py
+│   │   ├── m1_trend_opt.py
+│   │   ├── m2_revert.py
+│   │   ├── m2_revert_opt.py
+│   │   ├── m3_breakout.py
+│   │   ├── m4_leadership.py
+│   │   ├── m5_defensive.py
+│   │   ├── m6_high_beta.py
+│   │   ├── m7_washout.py
+│   │   └── m8_camarilla.py
+│   ├── models.py
+│   ├── scraper.py
+│   └── utils.py
+├── intraday_report.py
+├── manifest.py
+├── messenger.py
+├── morning_report.py
+├── requirements.txt
+├── tools
+│   ├── optimize_m1.py
+│   ├── optimize_m2.py
+│   ├── optimize_m3.py
+│   ├── optimize_m4.py
+│   ├── optimize_m5.py
+│   ├── optimize_m6.py
+│   ├── optimize_m7.py
+│   └── optimize_m8.py
+├── tree_manifest.txt
+└── wintra_scheduled_report.md

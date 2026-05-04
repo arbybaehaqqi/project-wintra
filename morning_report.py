@@ -2,315 +2,119 @@ import os
 import json
 import pandas as pd
 import yfinance as yf
-from datetime import datetime
+from datetime import datetime, timedelta
+import pandas_ta as ta
 
-# Import the production engines
+# 1. IMPORT PRODUCTION ENGINES
 from core.models.m1_trend import TrendModel as M1
-from core.models.m2_revert_opt import RevertModel as M2
+from core.models.m2_revert import RevertModel as M2
 from core.models.m3_breakout import BreakoutModel as M3
 from core.models.m4_leadership import LeadershipModel as M4
+from core.models.m6_high_beta import HighBetaModel as M6
+from core.models.m9_controller import PortfolioController as M9
 
-# ANSI Color Codes for Terminal UI
-GRAY = "\033[90m"
-RESET = "\033[0m"
+# ANSI Colors
+CYAN, GREEN, YELLOW, RED, MAGENTA, GRAY, RESET = "\033[96m", "\033[92m", "\033[93m", "\033[91m", "\033[95m", "\033[90m", "\033[0m"
 
-# Global list to store the report for the Markdown export
+DEBUG_MODE = True
+DEBUG_WATCHLIST = ["BBRI", "TLKM", "GOTO", "AMMN", "ASII"] 
+TARGET_DATE = "2026-04-27" 
 REPORT_BUFFER = []
 
 def log(text=""):
-    """Prints to console AND saves to the Markdown buffer (stripping ANSI codes)."""
     print(text)
-    clean_text = text.replace(GRAY, "").replace(RESET, "")
+    clean_text = text.replace(CYAN, "").replace(GREEN, "").replace(YELLOW, "").replace(RED, "").replace(MAGENTA, "").replace(GRAY, "").replace(RESET, "")
     REPORT_BUFFER.append(clean_text)
 
-class WintraTournament:
-    """The Morning Report Priority Engine."""
-    REGIME_WEIGHTS = {
-        "BULL": {
-            "M4_Alpha": 0.50,
-            "M1_Trend": 0.30,
-            "M3_Breakout": 0.20,
-            "M2_Revert": 0.00
-        },
-        "BEAR": {
-            "M2_Revert": 0.40,
-            "M1_Trend": 0.35,
-            "M3_Breakout": 0.15,
-            "M4_Alpha": 0.10
-        },
-        "SIDEWAYS": {
-            "M4_Alpha": 0.35,
-            "M1_Trend": 0.35,
-            "M3_Breakout": 0.20,
-            "M2_Revert": 0.10
-        }
-    }
-
-    @staticmethod
-    def normalize_score(model_name, raw_value):
-        """Converts disparate metrics into a standardized 1-100 Conviction Score."""
-        if model_name == "M1_Trend":
-            score = max(0, 100 - (raw_value * 10))
-            return score
-        elif model_name == "M2_Revert":
-            score = min(100, raw_value * 6.6)
-            return score
-        elif model_name == "M3_Breakout":
-            score = min(100, raw_value * 20)
-            return score
-        elif model_name == "M4_Alpha":
-            score = min(100, raw_value * 6.6)
-            return score
-        return 0.0
-
-    @staticmethod
-    def rank_candidates(candidates, regime):
-        weights = WintraTournament.REGIME_WEIGHTS.get(regime, WintraTournament.REGIME_WEIGHTS["SIDEWAYS"])
-        for c in candidates:
-            model_weight = weights.get(c['model'], 0)
-            normalized_score = WintraTournament.normalize_score(c['model'], c['metric_val'])
-            c['tournament_score'] = normalized_score * model_weight
-            c['weight_applied'] = model_weight
-            
-        return sorted(candidates, key=lambda x: x['tournament_score'], reverse=True)
-
-def fetch_macro_context():
-    """Fetches IHSG, USD/IDR, and Crude Oil data for the macro view."""
-    macro_tickers = {
-        "IHSG": "^JKSE",
-        "USD/IDR": "IDR=X",
-        "Crude Oil": "CL=F"
-    }
-    
-    print("📡 Fetching Global Macro Indicators...")
-    data = yf.download(list(macro_tickers.values()), period="5d", interval="1d", progress=False)
-    
-    macro_summary = {}
-    for name, ticker in macro_tickers.items():
-        try:
-            close_prices = data['Close'][ticker].dropna()
-            if len(close_prices) >= 2:
-                curr = close_prices.iloc[-1]
-                prev = close_prices.iloc[-2]
-                pct_change = ((curr - prev) / prev) * 100
-                macro_summary[name] = {"price": curr, "change": pct_change}
-            else:
-                macro_summary[name] = {"price": 0.0, "change": 0.0}
-        except:
-            macro_summary[name] = {"price": 0.0, "change": 0.0}
-            
-    ihsg_series = data['Close']["^JKSE"].dropna()
-    if ihsg_series.index.tz is not None:
-        ihsg_series.index = ihsg_series.index.tz_localize(None)
-        
-    return macro_summary, ihsg_series
-
 def run_morning_report():
-    now = datetime.now().strftime("%Y-%m-%d | %H:%M WIB")
-    log(f"\n" + "═"*75)
-    log(f"🌅 WINTRA INTEGRATED MORNING REPORT | {now}")
-    log("═"*75)
+    report_date = TARGET_DATE if TARGET_DATE else datetime.now().strftime("%Y-%m-%d")
+    
+    log(f"\n" + "═"*85)
+    log(f"{CYAN}🌅 WINTRA PORTFOLIO STRATEGY REPORT (M9 CONTROLLED) | {report_date}{RESET}")
+    log("═"*85)
 
-    macro_data, ihsg_series = fetch_macro_context()
-    m1, m2, m3, m4 = M1(), M2(), M3(), M4()
+    # A. FETCH DATA & IHSG
+    macro_tickers = {"IHSG": "^JKSE"}
+    end_dt = pd.to_datetime(report_date) + timedelta(days=1)
+    macro_data = yf.download(list(macro_tickers.values()), start="2026-01-01", end=end_dt, interval="1d", progress=False)
+    ihsg_series = macro_data['Close']["^JKSE"].dropna()
+    if ihsg_series.index.tz is not None: ihsg_series.index = ihsg_series.index.tz_localize(None)
+
+    m1, m2, m3, m4, m6 = M1(), M2(), M3(), M4(), M6()
+    m9 = M9(max_slots=4, max_per_model=2)
+    
     current_regime = m1.detect_regime(ihsg_series)
-    
-    log("\n🌍 1. MACRO & MARKET CONTEXT")
-    log("─"*75)
-    log(f"Market Regime   : {current_regime}")
-    
-    for name, stats in macro_data.items():
-        sign = "+" if stats['change'] > 0 else ""
-        if name == "USD/IDR":
-            log(f"{name:<15} : Rp {stats['price']:,.0f} ({sign}{stats['change']:.2f}%)")
-        elif name == "Crude Oil":
-            log(f"{name:<15} : ${stats['price']:.2f}/bbl ({sign}{stats['change']:.2f}%)")
-        else:
-            log(f"{name:<15} : {stats['price']:,.2f} ({sign}{stats['change']:.2f}%)")
+    log(f"🌍 {CYAN}1. MARKET REGIME DETECTION:{RESET} {MAGENTA}{current_regime}{RESET}")
 
-    active_weights = WintraTournament.REGIME_WEIGHTS.get(current_regime, {})
-
+    # B. UNIVERSE SCAN
     data_path = os.path.join("core", "data", "idx80_list.json")
-    if not os.path.exists(data_path):
-        log("\n❌ Error: Universe data missing. Run scraper first.")
-        return
-        
-    with open(data_path, 'r') as f:
-        universe = json.load(f).get('tickers', [])
-    
+    with open(data_path, 'r') as f: universe = json.load(f).get('tickers', [])
     yf_tickers = [f"{t}.JK" for t in universe]
-    print(f"\n📡 Scanning {len(yf_tickers)} IDX80 Tickers...") # Print only, no need in MD log
-    market_data = yf.download(yf_tickers, period="6mo", interval="1d", progress=False)
+    market_data = yf.download(yf_tickers, period="6mo", end=end_dt, interval="1d", progress=False)
+    if market_data.index.tz is not None: market_data.index = market_data.index.tz_localize(None)
     
-    if market_data.index.tz is not None:
-        market_data.index = market_data.index.tz_localize(None)
-    
-    candidates_passed = []
-    candidates_failed = []
+    raw_signals = []
 
-    # 3. Evaluate Engines
+    log(f"\n📡 {CYAN}2. SCANNING UNIVERSE & PARAMETER AUDIT{RESET}")
+    log("─"*85)
+    
     for ticker in yf_tickers:
+        symbol = ticker.replace('.JK', '')
         try:
-            symbol = ticker.replace('.JK', '')
-            c = market_data['Close'][ticker].dropna()
-            v = market_data['Volume'][ticker].dropna()
-            o = market_data['Open'][ticker].dropna()
-            h = market_data['High'][ticker].dropna()
-            l = market_data['Low'][ticker].dropna()
-            
+            c, v, o, h, l = market_data['Close'][ticker].dropna(), market_data['Volume'][ticker].dropna(), market_data['Open'][ticker].dropna(), market_data['High'][ticker].dropna(), market_data['Low'][ticker].dropna()
             if len(c) < 60: continue
 
-            # M1: Trend
-            if active_weights.get("M1_Trend", 0) > 0:
-                ema_f = c.ewm(span=10, adjust=False).mean().iloc[-1]
-                prox = ((c.iloc[-1] - ema_f) / ema_f) * 100
-                if prox > 0:
-                    is_passed = m1.evaluate(c, v, ihsg_series)
-                    item = {'ticker': symbol, 'model': 'M1_Trend', 'metric_val': prox, 'price': c.iloc[-1], 'metric_name': 'Proximity', 'status': 'PASSED' if is_passed else 'FAILED'}
-                    if is_passed: candidates_passed.append(item)
-                    else: candidates_failed.append(item)
+            # DEBUG AUDIT
+            if DEBUG_MODE and symbol in DEBUG_WATCHLIST:
+                log(f"\n{YELLOW}[DEBUG: {symbol}]{RESET}")
+                avg_vol = v.iloc[-21:-1].mean()
+                ema10_val = ta.ema(c, length=10).iloc[-1]
+                ema20_val = ta.ema(c, length=20).iloc[-1]
+                log(f"  M1 (Trend)  | EMA10: {ema10_val:.0f} vs EMA20: {ema20_val:.0f} | Vol Ratio: {v.iloc[-1]/avg_vol:.2f}x")
+                log(f"  M4 (Alpha)  | Alpha Score: {m4.get_alpha_score(c, ihsg_series):+.2f}%")
+                itr = ((h.iloc[-1] - l.iloc[-1]) / o.iloc[-1]) * 100
+                res = (c.iloc[-1] - l.iloc[-1]) / (h.iloc[-1] - l.iloc[-1]) if (h.iloc[-1] - l.iloc[-1]) > 0 else 0
+                log(f"  M6 (Beta)   | ITR: {itr:.1f}% | Resilience: {res:.2f}")
 
-            # M2: Revert
-            if active_weights.get("M2_Revert", 0) > 0:
-                elast = m2.get_elasticity_score(c)
-                is_passed = m2.evaluate(c, v, o, h, l, ihsg_series)
-                item = {'ticker': symbol, 'model': 'M2_Revert', 'metric_val': elast, 'price': c.iloc[-1], 'metric_name': 'Stretch', 'status': 'PASSED' if is_passed else 'FAILED'}
-                if is_passed: candidates_passed.append(item)
-                else: candidates_failed.append(item)
+            # --- EXECUTION WITH KEYWORD ARGUMENTS (Prevent Positional Errors) ---
+            if m4.evaluate(close_prices=c, volume_series=v, open_prices=o, high_prices=h, market_index_series=ihsg_series):
+                raw_signals.append({'ticker': symbol, 'model': 'M4', 'raw_score': m4.get_alpha_score(c, ihsg_series), 'desc': 'Alpha Leader'})
 
-            # M3: Breakout
-            if active_weights.get("M3_Breakout", 0) > 0:
-                strength = m3.get_breakout_strength(c, v)
-                is_passed = m3.evaluate(c, v, h, l, ihsg_series)
-                item = {'ticker': symbol, 'model': 'M3_Breakout', 'metric_val': strength, 'price': c.iloc[-1], 'metric_name': 'Vol Surge', 'status': 'PASSED' if is_passed else 'FAILED'}
-                if is_passed: candidates_passed.append(item)
-                else: candidates_failed.append(item)
+            if m1.evaluate(close_prices=c, volume_series=v, market_index_series=ihsg_series):
+                raw_signals.append({'ticker': symbol, 'model': 'M1', 'raw_score': 100 - (m1.get_proximity(c)*10), 'desc': 'Trend Ignition'})
 
-            # M4: Alpha
-            if active_weights.get("M4_Alpha", 0) > 0:
-                alpha = m4.get_alpha_score(c, ihsg_series)
-                is_passed = m4.evaluate(c, v, o, h, ihsg_series)
-                item = {'ticker': symbol, 'model': 'M4_Alpha', 'metric_val': alpha, 'price': c.iloc[-1], 'metric_name': 'Alpha Outperf', 'status': 'PASSED' if is_passed else 'FAILED'}
-                if is_passed: candidates_passed.append(item)
-                else: candidates_failed.append(item)
+            if m2.evaluate(close_prices=c, volume_series=v, open_prices=o, high_prices=h, low_prices=l, market_index_series=ihsg_series):
+                raw_signals.append({'ticker': symbol, 'model': 'M2', 'raw_score': m2.get_elasticity_score(c), 'desc': 'Elastic Sniper'})
 
-        except Exception:
-            continue
+            if m3.evaluate(close_prices=c, volume_series=v, high_prices=h, low_prices=l, market_index_series=ihsg_series):
+                raw_signals.append({'ticker': symbol, 'model': 'M3', 'raw_score': m3.get_breakout_strength(c, v)*10, 'desc': 'Stage 2 Breakout'})
 
-    log("\n🔍 2. INDIVIDUAL ENGINE SIGNALS & NEAR MISSES")
-    log("─"*75)
-    model_keys = ["M4_Alpha", "M1_Trend", "M3_Breakout", "M2_Revert"]
-    
-    for mod in model_keys:
-        weight = active_weights.get(mod, 0)
-        weight_str = f"{weight*100:>2.0f}% Weight"
-        
-        if weight == 0:
-            log(f"[{mod:<11} | {weight_str}] 🛡️ OFF (Disabled to prevent value traps)\n")
-            continue
-            
-        mod_passed = [c for c in candidates_passed if c['model'] == mod]
-        mod_failed = [c for c in candidates_failed if c['model'] == mod]
-            
-        if mod == "M1_Trend":
-            mod_passed.sort(key=lambda x: x['metric_val']) 
-            mod_failed.sort(key=lambda x: x['metric_val']) 
-        else:
-            mod_passed.sort(key=lambda x: x['metric_val'], reverse=True) 
-            mod_failed.sort(key=lambda x: x['metric_val'], reverse=True) 
-            
-        if not mod_passed:
-            log(f"[{mod:<11} | {weight_str}] ⚠️ No tickers met all criteria today.")
-        else:
-            log(f"[{mod:<11} | {weight_str}] ✅ Triggered on {len(mod_passed)} ticker(s):")
-            for i, c in enumerate(mod_passed[:3]):
-                metric = f"{c['metric_val']:.2f}"
-                if c['metric_name'] in ['Proximity', 'Stretch', 'Alpha Outperf']: metric += "%"
-                elif c['metric_name'] == 'Vol Surge': metric += "x"
-                log(f"   {i+1}. {c['ticker'].ljust(6)} | {c['metric_name']}: {metric}")
+            is_m6, m6_meta = m6.evaluate(pd.DataFrame({'Open':o, 'High':h, 'Low':l, 'Close':c}))
+            if is_m6:
+                raw_signals.append({'ticker': symbol, 'model': 'M6', 'raw_score': 50.0, 'desc': f'ITR: {m6_meta.get("ITR", 0):.1f}%'})
                 
-        if mod_failed:
-            log(f"{GRAY}   --- Near Misses (Failed Quality Filters / Not Recommended) ---")
-            for i, c in enumerate(mod_failed[:3]):
-                metric = f"{c['metric_val']:.2f}"
-                if c['metric_name'] in ['Proximity', 'Stretch', 'Alpha Outperf']: metric += "%"
-                elif c['metric_name'] == 'Vol Surge': metric += "x"
-                log(f"   {i+1}. {c['ticker'].ljust(6)} | {c['metric_name']}: {metric}{RESET}")
-        log("") 
+        except Exception as e:
+            if symbol in DEBUG_WATCHLIST: log(f"  {RED}Error on {symbol}: {e}{RESET}")
 
-    # 3. Tournament Ranking (ONLY uses passed candidates)
-    ranked_passed = WintraTournament.rank_candidates(candidates_passed, current_regime)
+    # D. TOURNAMENT
+    log(f"\n🏆 {CYAN}3. THE WINTRA TOURNAMENT: M9 SELECTION{RESET}")
+    log("─"*85)
     
-    log("🏆 3. THE WINTRA TOURNAMENT: TOP 5 CONVICTION TRADES")
-    log("─"*75)
-    
-    seen_tickers = set()
-    final_top_5 = []
-    
-    for c in ranked_passed:
-        if c['ticker'] not in seen_tickers:
-            final_top_5.append(c)
-            seen_tickers.add(c['ticker'])
-        if len(final_top_5) == 5:
-            break
+    ranked = m9.rank_signals(raw_signals, current_regime)
+    picks = m9.manage_exposure({}, ranked)
 
-    if not final_top_5:
-        log("🛡️ NO TRADES DETECTED. The models have rejected all current market setups.")
+    if not picks:
+        log(f"{YELLOW}⚠️ No high-conviction signals cleared the M9 filters today.{RESET}")
     else:
-        for i, c in enumerate(final_top_5):
-            t = c['ticker'].ljust(6)
-            mod = c['model'].replace('_', ' ')
-            score = c['tournament_score']
-            metric = f"{c['metric_val']:.2f}"
-            if c['metric_name'] in ['Proximity', 'Stretch', 'Alpha Outperf']: metric += "%"
-            elif c['metric_name'] == 'Vol Surge': metric += "x"
-            
-            log(f" {i+1}. {t} | {mod:<13} | Score: {score:>5.1f} | {c['metric_name']}: {metric}")
+        for i, p in enumerate(picks):
+            log(f" {i+1}. {p['ticker'].ljust(6)} | {p['model']:<8} | Score: {p['final_score']:>5.1f} | {p['desc']}")
 
-    # 4. Expanded League (Passed + Failed)
-    all_candidates = candidates_passed + candidates_failed
-    ranked_all = WintraTournament.rank_candidates(all_candidates, current_regime)
-
-    log("\n🌐 4. THE EXPANDED LEAGUE: TOP 10 OVERALL (Including Near Misses)")
-    log("─"*75)
-
-    seen_all = set()
-    final_top_10 = []
-
-    for c in ranked_all:
-        if c['ticker'] not in seen_all:
-            final_top_10.append(c)
-            seen_all.add(c['ticker'])
-        if len(final_top_10) == 10:
-            break
-
-    if not final_top_10:
-        log("🛡️ NO STOCKS SCORED IN THE LEAGUE.")
-    else:
-        for i, c in enumerate(final_top_10):
-            t = c['ticker'].ljust(6)
-            mod = c['model'].replace('_', ' ')
-            score = c['tournament_score']
-            metric = f"{c['metric_val']:.2f}"
-            if c['metric_name'] in ['Proximity', 'Stretch', 'Alpha Outperf']: metric += "%"
-            elif c['metric_name'] == 'Vol Surge': metric += "x"
-            
-            if c['status'] == 'PASSED':
-                log(f" {i+1:>2}. {t} | {mod:<13} | Score: {score:>5.1f} | {c['metric_name']}: {metric} | ✅ High Conviction")
-            else:
-                log(f"{GRAY} {i+1:>2}. {t} | {mod:<13} | Score: {score:>5.1f} | {c['metric_name']}: {metric} | ⚠️ Near Miss{RESET}")
-
-    log("═"*75 + "\n")
-
-    # SAVE TO MARKDOWN REPORT
-    report_text = "\n".join(REPORT_BUFFER)
-    # Add a code block wrapper so it renders nicely in standard Markdown viewers
-    md_content = f"```text\n{report_text}\n```"
-    
-    with open("wintra_scheduled_report.md", "w", encoding="utf-8") as f:
-        f.write(md_content)
-    
-    print(f"💾 Scheduled Report successfully exported to: wintra_scheduled_report.md")
+    log(f"\n🌐 {CYAN}4. REGIME WEIGHTS (MODEL 9 CONTROL):{RESET}")
+    log("─"*85)
+    lookup = "BEAR" if current_regime == "DEFENSIVE" else current_regime
+    w = m9.REGIME_PRIORITY.get(lookup, {})
+    log(f"{GRAY}" + " | ".join([f"{k}: {v*100:.0f}%" for k, v in w.items() if v > 0]) + f"{RESET}")
+    log("\n" + "═"*85 + "\n")
 
 if __name__ == "__main__":
     run_morning_report()
