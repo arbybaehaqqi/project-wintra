@@ -13,9 +13,9 @@ RED = "\033[91m"
 MAGENTA = "\033[95m"
 RESET = "\033[0m"
 
-CACHE_DIR = "core/data/intraday_cache"
+CACHE_DIR = "core/data/master_ticker"
 
-def load_intraday_cache():
+def load_master_ticker():
     if not os.path.exists(CACHE_DIR) or not os.listdir(CACHE_DIR):
         print(f"{RED}❌ Cache missing. Run core/data_fetcher.py first.{RESET}")
         return {}
@@ -181,7 +181,7 @@ def run_grid_search(universe_dict, whitelist):
         print(f"#{i+1:<4} | >{p[0]:<6.1f} | <{p[1]:<6.2f} | {p[2]}x Risk{'':<3} | {r['signals']:<8} | {r['wr']:>8.1f}% | {r['ev']:>+8.2f}%")
 
 if __name__ == "__main__":
-    universe = load_intraday_cache()
+    universe = load_master_ticker()
     if universe:
         whitelist = find_target_stocks(universe)
         if whitelist:

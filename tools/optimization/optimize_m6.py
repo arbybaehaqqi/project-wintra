@@ -13,9 +13,9 @@ RED = "\033[91m"
 MAGENTA = "\033[95m"
 RESET = "\033[0m"
 
-CACHE_DIR = "core/data/intraday_cache"
+CACHE_DIR = "core/data/master_ticker"
 
-def load_intraday_cache():
+def load_master_ticker():
     """Loads the 5-minute bar CSVs from the local cache."""
     if not os.path.exists(CACHE_DIR) or not os.listdir(CACHE_DIR):
         print(f"{RED}❌ Cache missing. Run core/data_fetcher.py first.{RESET}")
@@ -170,7 +170,7 @@ def run_optimizer(universe_dict):
         print(f"#{i+1:<4} | >{p[0]:<5.1f} | >{p[1]:<5.2f} | {p[2]:<6.1f} | {r['signals']:<8} | {r['wr']:>8.1f}% | {r['ev']:>+8.2f}%")
 
 if __name__ == "__main__":
-    universe = load_intraday_cache()
+    universe = load_master_ticker()
     if universe:
         # Step 1: Discover who our "natural" winners are
         find_target_stocks(universe)

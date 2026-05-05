@@ -4,7 +4,7 @@ from datetime import datetime
 import time
 
 # --- CONFIGURATION ---
-CACHE_DIR = "core/data/intraday_cache"
+CACHE_DIR = "core/data/master_ticker"
 REQUIRED_COLUMNS = ["Datetime", "Open", "High", "Low", "Close", "Volume"]
 
 # ANSI Colors

@@ -9,7 +9,7 @@ import time
 # --- CONFIGURATION ---
 BASE_DIR = "core/data"
 LIST_PATH = f"{BASE_DIR}/idx80_list.json"
-CACHE_DIR = f"{BASE_DIR}/intraday_cache"
+CACHE_DIR = f"{BASE_DIR}/master_ticker"
 REQUIRED_COLUMNS = ["Datetime", "Open", "High", "Low", "Close", "Volume"]
 LOOKBACK_DAYS = 58 
 

@@ -14,9 +14,9 @@ MAGENTA = "\033[95m"
 GRAY = "\033[90m"
 RESET = "\033[0m"
 
-CACHE_DIR = "core/data/intraday_cache"
+CACHE_DIR = "core/data/master_ticker"
 
-def load_intraday_cache():
+def load_master_ticker():
     if not os.path.exists(CACHE_DIR) or not os.listdir(CACHE_DIR):
         print(f"{RED}❌ Cache missing. Run core/data_fetcher.py first.{RESET}")
         return {}
@@ -140,6 +140,6 @@ def run_grid_search(universe_dict):
         print(f"#{i+1:<4} | > {int(p[0]*100)}%{'':<7} | {str(p[1]):<12} | {r['signals']:<10} | {r['accuracy']:>8.1f}%   | {RED}{r['avg_bleed']:>+8.2f}%{RESET}")
 
 if __name__ == "__main__":
-    universe = load_intraday_cache()
+    universe = load_master_ticker()
     if universe:
         run_grid_search(universe)

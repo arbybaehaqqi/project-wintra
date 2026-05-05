@@ -15,7 +15,7 @@ class DataGate:
     Optimized: Gate 2 (Daily) now targets the last completed session to prevent 
     aggressive re-syncing during market hours.
     """
-    CACHE_DIR = "core/data/intraday_cache"
+    CACHE_DIR = "core/data/master_ticker"
     
     @staticmethod
     def _get_wib_now():

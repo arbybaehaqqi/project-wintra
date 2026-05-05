@@ -34,7 +34,7 @@ def load_m1_class():
 
 # --- CONFIGURATION ---
 UNIVERSE_PATH = os.path.join(REPO_ROOT, 'core', 'data', 'idx80_list.json')
-CACHE_DIR = os.path.join(REPO_ROOT, 'core', 'data', 'intraday_cache')
+CACHE_DIR = os.path.join(REPO_ROOT, 'core', 'data', 'master_ticker')
 TARGET_DATE = '2026-04-27'
 
 def load_universe(filepath):
