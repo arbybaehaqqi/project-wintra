@@ -25,6 +25,7 @@
         "BUKA",
         "BUMI",
         "CBDK",
+        "CDIA",
         "CMRY",
         "CPIN",
         "CTRA",
@@ -40,6 +41,7 @@
         "EXCL",
         "GGRM",
         "GOTO",
+        "GZCO",
         "HEAL",
         "HRUM",
         "ICBP",
@@ -88,5 +90,6 @@
         "UNTR",
         "UNVR",
         "WIFI"
-    ]
+    ],
+    "last_update": "2026-05-05 12:50"
 }
